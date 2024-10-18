@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main - Personal Finance Tracker</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 20px auto;
+            padding: 20px;
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        h1,
+        h2 {
+            margin: 0;
+        }
+
+        button.profile-btn {
+            background: none;
+            border: none;
+            cursor: pointer;
+        }
+
+        button.profile-btn img {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+        }
+
+        a {
+            color: #007BFF;
+            text-decoration: none;
+        }
+
+        a:hover {
+            text-decoration: underline;
+        }
+
+        .section {
+            margin-bottom: 30px;
+        }
+
+        input,
+        button {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border: 1px solid #ddd;
+        }
+
+        button {
+            background-color: #007BFF;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:hover {
+            background-color: #0056b3;
+        }
+
+        .charts-container {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        #barChartContainer,
+        #pieChartContainer {
+            width: 100%;
+            max-width: 45%;
+        }
+
+        #barChart,
+        #pieChart {
+            width: 100% !important;
+            height: 400px;
+        }
+
+        #suggestions {
+            font-style: italic;
+            background-color: #f4f4f4;
+            padding: 15px;
+            border-left: 5px solid #007BFF;
+        }
+
+        .investment-info {
+            background-color: #e7f3ff;
+            padding: 10px;
+            border-left: 5px solid #0056b3;
+            margin-top: 20px;
+        }
+
+        #alerts {
+            background-color: #ffefef;
+            padding: 15px;
+            border-left: 5px solid #ff4d4d;
+        }
+
+        #alertForm {
+            margin-top: 20px;
+        }
+
+        .alert-item {
+            margin-bottom: 10px;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            background-color: #fff;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <h1>Personal Finance Tracker</h1>
+            <button class="profile-btn" onclick="window.location.href='profile.html'">
+                <img src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTdK_dnE_5cezDHypwWCPUwWlUQU0y4pwvyDA&s"
+                    alt="Profile">
+            </button>
+        </header>
+        <main>
+            <section class="section">
+                <h2>Financial Overview</h2>
+                <div class="charts-container">
+                    <div id="barChartContainer">
+                        <canvas id="barChart"></canvas>
+                    </div>
+                    <div id="pieChartContainer">
+                        <canvas id="pieChart"></canvas>
+                    </div>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Input Your Financial Data (in Rupees ₹)</h2>
+                <label for="income">Monthly Income (₹):</label>
+                <input type="number" id="income" placeholder="Enter your monthly income in ₹">
+
+                <label for="expenses">Monthly Expenses (₹):</label>
+                <input type="number" id="expenses" placeholder="Enter your monthly expenses in ₹">
+
+                <label for="savings">Current Savings (₹):</label>
+                <input type="number" id="savings" placeholder="Your savings will be calculated automatically" readonly>
+
+                <button id="calculateBtn">Update Charts & Suggestions</button>
+            </section>
+
+            <section class="section">
+                <h2>Detailed Financial Suggestions</h2>
+                <div id="suggestions">
+                    Enter your data to get personalized suggestions on how to manage and invest your money effectively.
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Investment Suggestions</h2>
+                <div id="investmentSuggestions">
+                    <em>Loading investment data...</em>
+                </div>
+            </section>
+
+            <section class="section">
+                <h2>Custom Alerts</h2>
+                <div id="alerts">
+                    <div id="alertList">
+                        <!-- Alerts will be added here -->
+                    </div>
+                    <form id="alertForm">
+                        <label for="alertMessage">Add New Alert:</label>
+                        <input type="text" id="alertMessage" placeholder="Enter alert message">
+                        <button type="button" id="addAlertBtn">Add Alert</button>
+                    </form>
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script>
+        let chartData = {
+            income: 0,
+            expenses: 0,
+            savings: 0
+        };
+
+        function updateCharts() {
+            const remaining = chartData.income - chartData.expenses;
+
+            barChart.data.datasets[0].data = [chartData.income, chartData.expenses, remaining];
+            barChart.update();
+
+            pieChart.data.datasets[0].data = [remaining, chartData.expenses, chartData.savings];
+            pieChart.update();
+        }
+
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        const barChart = new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Expenses', 'Remaining'],
+                datasets: [{
+                    label: 'Financial Overview (₹)',
+                    data: [0, 0, 0],
+                    backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
+                }]
+            },
+            options: {
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        const pieChart = new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: ['Remaining', 'Expenses', 'Savings'],
+                datasets: [{
+                    data: [0, 0, 0],
+                    backgroundColor: ['#36A2EB', '#FF6384', '#FFCE56']
+                }]
+            }
+        });
+
+        document.getElementById('calculateBtn').addEventListener('click', function () {
+            const income = parseFloat(document.getElementById('income').value);
+            const expenses = parseFloat(document.getElementById('expenses').value);
+            const suggestions = document.getElementById('suggestions');
+            const investmentSuggestions = document.getElementById('investmentSuggestions');
+
+            if (isNaN(income) || isNaN(expenses)) {
+                suggestions.textContent = 'Please enter valid numbers for income and expenses.';
+                return;
+            }
+
+            const savings = income - expenses;
+            chartData.income = income;
+            chartData.expenses = expenses;
+            chartData.savings = savings;
+
+            document.getElementById('savings').value = savings;
+
+            updateCharts();
+
+            // Personalized investment suggestions
+            let advice = '';
+            if (savings > 10000) {
+                advice = `
+                    <strong>You have a good amount of savings!</strong><br>
+                    <p>Consider the following investment options:</p>
+                    <ul>
+                        <li><strong>Equity Mutual Funds:</strong> Invest a portion of your savings in diversified mutual funds to potentially earn higher returns.</li>
+                        <li><strong>Stocks:</strong> Look into high-performing stocks. Research sectors like technology or healthcare.</li>
+                        <li><strong>Real Estate:</strong> If you have substantial savings, consider investing in real estate for long-term returns.</li>
+                    </ul>
+                `;
+            } else if (savings > 5000) {
+                advice = `
+                    <strong>You have moderate savings!</strong><br>
+                    <p>Consider these options:</p>
+                    <ul>
+                        <li><strong>SIPs in Mutual Funds:</strong> Invest in Systematic Investment Plans for steady growth.</li>
+                        <li><strong>Index Funds:</strong> Invest in index funds for broad market exposure with lower risk.</li>
+                    </ul>
+                `;
+            } else {
+                advice = `
+                    <strong>You have some savings!</strong><br>
+                    <p>Try to focus on:</p>
+                    <ul>
+                        <li><strong>Emergency Fund:</strong> Keep a portion of your savings in a high-interest savings account for emergencies.</li>
+                        <li><strong>Short-term Deposits:</strong> Consider short-term fixed deposits for safe and guaranteed returns.</li>
+                    </ul>
+                `;
+            }
+            
+            suggestions.innerHTML = advice;
+
+            // Fetch investment data from Alpha Vantage
+            fetch(`https://www.alphavantage.co/query?function=TIME_SERIES_INTRADAY&symbol=MSFT&interval=1min&apikey=JY3T9E83DOFV39QJ`)
+                .then(response => response.json())
+                .then(data => {
+                    const timeSeries = data['Time Series (1min)'];
+                    if (timeSeries) {
+                        const suggestionsList = Object.keys(timeSeries).map(time => {
+                            const entry = timeSeries[time];
+                            return `<li>${time}: Open - ${entry['1. open']}, Close - ${entry['4. close']}</li>`;
+                        }).slice(0, 5); // Get the first 5 entries
+                        investmentSuggestions.innerHTML = `
+                            <strong>Recent Stock Data for MSFT:</strong><br>
+                            <ul>
+                                ${suggestionsList.join('')}
+                            </ul>
+                        `;
+                    } else {
+                        investmentSuggestions.innerHTML = '<p>No investment data available. Please try again later.</p>';
+                    }
+                })
+                .catch(error => {
+                    investmentSuggestions.innerHTML = '<p>Error fetching investment data. Please try again later.</p>';
+                });
+        });
+
+        document.getElementById('addAlertBtn').addEventListener('click', function () {
+            const alertMessage = document.getElementById('alertMessage').value;
+
+            if (alertMessage.trim() === '') {
+                alert('Please enter a message for the alert.');
+                return;
+            }
+
+            const alertList = document.getElementById('alertList');
+            const alertItem = document.createElement('div');
+            alertItem.className = 'alert-item';
+            alertItem.textContent = alertMessage;
+
+            alertList.appendChild(alertItem);
+            document.getElementById('alertMessage').value = '';
+        });
+    </script>
+</body>
+
+</html>
